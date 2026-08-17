@@ -56,6 +56,64 @@ function pay(id){const x=data.items.find(a=>a.id===id);if(!x)return;const d=next
 function formatMoneyInput(v){let digits=v.replace(/[^\d]/g,"");return digits?Number(digits).toLocaleString("en-US"):""}
 $("amount").addEventListener("input",e=>{const pos=e.target.selectionStart;e.target.value=formatMoneyInput(e.target.value);e.target.selectionStart=e.target.selectionEnd=e.target.value.length})
 $("addBtn").onclick=()=>$("formDlg").showModal();$("closeDlg").onclick=()=>$("formDlg").close();$("cancelBtn").onclick=()=>$("formDlg").close();
-$("form").onsubmit=e=>{e.preventDefault();try{const start=$("start").value.trim();jalaliToDate(start);const amount=Number($("amount").value.replace(/[^\d]/g,""));const item={id:crypto.randomUUID(),name:$("name").value.trim(),amount,day:Number($("day").value),start,count:Number($("count").value)};if(!item.name||!amount||item.day<1||item.day>31||item.count<1)throw Error("لطفاً همه اطلاعات را کامل وارد کنید.");data.items.push(item);$("form").reset();$("formDlg").close();save()}catch(err){alert(err.message)}};
+$("form").onsubmit=e=>{e.preventDefault();try{const start=$("start").value.trim();jalaliToDate(start);const amount=Number($("amount").value.replace(/[^\d]/g,""));const item={id:crypto.randomUUID(),name:$("name").value.trim(),amount,day:Number($("day").value),start,count:Number($("count").value)};if(!item.name||!amount||item.day<1||item.day>31||item.count<1)throw Error("لطفاً همه اطلاعات را کامل وارد کنید.");data.items.push(item);$("form").reset();$("start").value="";$("startDisplay").textContent="انتخاب تاریخ";$("startPicker").classList.add("placeholder");$("formDlg").close();save()}catch(err){alert(err.message)}};
 $("notifyBtn").onclick=async()=>{if(!("Notification"in window)){alert("این مرورگر اعلان را پشتیبانی نمی‌کند.");return}const p=await Notification.requestPermission();alert(p==="granted"?"اجازه اعلان فعال شد.":"اجازه اعلان داده نشد.")};
+
+const months=["فروردین","اردیبهشت","خرداد","تیر","مرداد","شهریور","مهر","آبان","آذر","دی","بهمن","اسفند"];
+let calYear,calMonth;
+
+function openCalendar(){
+  const current=$("start").value;
+  if(current){
+    [calYear,calMonth]=current.split("/").map(Number);
+  }else{
+    const nowJ=dateToJalali(new Date()).split("/").map(Number);
+    calYear=nowJ[0]; calMonth=nowJ[1];
+  }
+  drawCalendar();
+  $("calendarDlg").showModal();
+}
+function drawCalendar(){
+  $("calTitle").textContent=`${months[calMonth-1]} ${faNum(calYear)}`;
+  const first=jalaliToDate(`${calYear}/${pad(calMonth)}/01`);
+  // JS Sunday=0. Persian week starts Saturday, so convert to Saturday index.
+  const offset=(first.getDay()+1)%7;
+  const total=daysInMonth(calYear,calMonth);
+  const selected=$("start").value;
+  let html="";
+  for(let i=0;i<offset;i++) html+='<button class="empty" type="button"></button>';
+  for(let d=1;d<=total;d++){
+    const val=`${calYear}/${pad(calMonth)}/${pad(d)}`;
+    const classes=[];
+    if(val===dateToJalali(new Date())) classes.push("today");
+    if(val===selected) classes.push("selected");
+    html+=`<button type="button" class="${classes.join(" ")}" data-date="${val}">${faNum(d)}</button>`;
+  }
+  $("calendarDays").innerHTML=html;
+  document.querySelectorAll("#calendarDays button[data-date]").forEach(btn=>{
+    btn.onclick=()=>{
+      $("start").value=btn.dataset.date;
+      $("startDisplay").textContent=btn.dataset.date;
+      $("startPicker").classList.remove("placeholder");
+      $("calendarDlg").close();
+    };
+  });
+}
+function changeMonth(delta){
+  calMonth+=delta;
+  if(calMonth>12){calMonth=1;calYear++}
+  if(calMonth<1){calMonth=12;calYear--}
+  drawCalendar();
+}
+$("startPicker").onclick=openCalendar;
+$("prevMonth").onclick=()=>changeMonth(-1);
+$("nextMonth").onclick=()=>changeMonth(1);
+$("todayBtn").onclick=()=>{
+  const nowJ=dateToJalali(new Date());
+  $("start").value=nowJ;
+  $("startDisplay").textContent=nowJ;
+  $("startPicker").classList.remove("placeholder");
+  $("calendarDlg").close();
+};
+
 render();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");

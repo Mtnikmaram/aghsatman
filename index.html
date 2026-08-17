@@ -52,10 +52,29 @@
     <div class="moneyInput"><input id="amount" required inputmode="numeric" autocomplete="off" placeholder="25,000,000"><span>تومان</span></div>
   </label>
   <label>روز پرداخت<input id="day" required min="1" max="31" type="number" value="15"></label>
-  <label>تاریخ شروع شمسی<input id="start" required inputmode="numeric" placeholder="1405/06/18"></label>
+  <label>تاریخ شروع شمسی<div class="datePickerField" id="startPicker"><span id="startDisplay">انتخاب تاریخ</span><span>📅</span></div><input id="start" type="hidden" required></label>
   <label>تعداد اقساط<input id="count" min="1" type="number" value="12"></label>
   <div class="actions"><button type="button" class="secondaryBtn" id="cancelBtn">انصراف</button><button class="primaryBtn" type="submit">ذخیره قسط</button></div>
 </form>
+</dialog>
+
+
+<dialog id="calendarDlg">
+  <div class="calendar">
+    <div class="calendarHead">
+      <button type="button" class="calNav" id="prevMonth">‹</button>
+      <div>
+        <div class="modalKicker">انتخاب تاریخ</div>
+        <h3 id="calTitle"></h3>
+      </div>
+      <button type="button" class="calNav" id="nextMonth">›</button>
+    </div>
+    <div class="weekdays">
+      <span>ش</span><span>ی</span><span>د</span><span>س</span><span>چ</span><span>پ</span><span>ج</span>
+    </div>
+    <div id="calendarDays" class="calendarDays"></div>
+    <button type="button" class="todayBtn" id="todayBtn">امروز</button>
+  </div>
 </dialog>
 
 <script src="app.js"></script>
