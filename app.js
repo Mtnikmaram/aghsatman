@@ -1,11 +1,61 @@
-const KEY='aghsatman_v1';let data=JSON.parse(localStorage.getItem(KEY)||'{"items":[],"paid":[]}');
-const faMonths=['فروردین','اردیبهشت','خرداد','تیر','مرداد','شهریور','مهر','آبان','آذر','دی','بهمن','اسفند'];
-function pad(n){return String(n).padStart(2,'0')}
-function jalaliToDate(s){let [jy,jm,jd]=s.split('/').map(Number);let gy=jy+621;let march=(jm<=10)?21:20;let d=new Date(gy,march-1,1);d.setDate(d.getDate()+((jm-1)*30)+jd-1);return d}
-function dateToFa(d){return new Intl.DateTimeFormat('fa-IR-u-ca-persian',{year:'numeric',month:'2-digit',day:'2-digit'}).format(d)}
-function nextDue(item){let start=jalaliToDate(item.start), now=new Date();for(let i=0;i<item.count;i++){let d=new Date(start);d.setMonth(d.getMonth()+i);d.setDate(Math.min(item.day,new Date(d.getFullYear(),d.getMonth()+1,0).getDate()));if(d>=new Date(now.getFullYear(),now.getMonth(),now.getDate()))return {date:d,i};}return null}
+const KEY="aghsatman_v3";
+let data=JSON.parse(localStorage.getItem(KEY)||'{"items":[],"paid":[]}');
+const $=id=>document.getElementById(id);
+
 function save(){localStorage.setItem(KEY,JSON.stringify(data));render()}
-function money(n){return Number(n).toLocaleString('fa-IR')+' تومان'}
-function render(){let upcoming=data.items.map(x=>({x,d:nextDue(x)})).filter(a=>a.d).sort((a,b)=>a.d.date-b.d.date);let n=upcoming[0];nextTitle.textContent=n?.x.name||'-';nextAmount.textContent=n?money(n.x.amount):'-';nextDate.textContent=n?dateToFa(n.d.date):'-';list.innerHTML=upcoming.map(a=>`<div class="card"><div><b>${a.x.name}</b><div class="muted">${dateToFa(a.d.date)} · ${a.d.i+1} از ${a.x.count}</div></div><div><div class="amount">${money(a.x.amount)}</div><button onclick="pay('${a.x.id}')">پرداخت شد</button></div></div>`).join('')||'<p class="muted">قسطی ثبت نشده.</p>';paidList.innerHTML=data.paid.slice(-20).reverse().map(p=>`<div class="card"><div><b>${p.name}</b><div class="muted">${p.date}</div></div><div class="amount">${money(p.amount)}</div></div>`).join('')||'<p class="muted">هنوز پرداختی ثبت نشده.</p>'}
-function pay(id){let x=data.items.find(a=>a.id===id),d=nextDue(x);if(!x||!d)return;data.paid.push({name:x.name,amount:x.amount,date:dateToFa(new Date())});x.count--;x.start=dateToFa(d.date);if(x.count<=0)data.items=data.items.filter(a=>a.id!==id);save()}
-addBtn.onclick=()=>formDlg.showModal();form.onsubmit=e=>{e.preventDefault();data.items.push({id:crypto.randomUUID(),name:name.value,amount:Number(amount.value),day:Number(day.value),start:start.value,count:Number(count.value)});formDlg.close();form.reset();save()};notifyBtn.onclick=async()=>{if(!('Notification'in window)){alert('مرورگر این قابلیت را ندارد.');return}let p=await Notification.requestPermission();alert(p==='granted'?'اعلان‌ها فعال شد.':'اجازه اعلان داده نشد.')};render();if('serviceWorker'in navigator)navigator.serviceWorker.register('sw.js');
+function faNum(n){return Number(n).toLocaleString("fa-IR")}
+function money(n){return faNum(n)+" تومان"}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]))}
+function pad(n){return String(n).padStart(2,"0")}
+
+/* Persian/Jalali calendar conversion */
+const breaks=[-61,9,38,199,426,686,756,818,1111,1181,1210,1635,2060,2097,2192,2262,2347,2380,2450,3178];
+function div(a,b){return Math.floor(a/b)}
+function mod(a,b){return a-Math.floor(a/b)*b}
+function jalCal(jy){
+ let bl=breaks.length, gy=jy+621, leapJ=-14, jp=breaks[0], jm=0, jump=0;
+ for(let i=1;i<bl;i++){jm=breaks[i];jump=jm-jp;if(jy<jm)break;leapJ+=div(jump,33)*8+div(mod(jump,33),4);jp=jm}
+ let n=jy-jp;leapJ+=div(n,33)*8+div(mod(n,33)+3,4);
+ if(mod(jump,33)===4&&jump-n===4)leapJ++;
+ let leapG=div(gy,4)-div((div(gy,100)+1)*3,4)-150;
+ return {leap:mod(mod(n+1,33)-1,4),march:20+leapJ-leapG}
+}
+function g2d(gy,gm,gd){let d=div((gy+div(gm-8,6)+100100)*1461,4)+div(153*mod(gm+9,12)+2,5)+gd-34840408;return d-div(div(gy+100100+div(gm-8,6),100)*3,4)+752}
+function d2g(j){let j2=4*j+139361631;j2+=div(div(4*j+183187720,146097)*3,4)*4-3908;let i=div(mod(j2,1461),4)*5+308;let gd=div(mod(i,153),5)+1,gm=mod(div(i,153),12)+1,gy=div(j2,1461)-100100+div(8-gm,6);return[gy,gm,gd]}
+function j2d(jy,jm,jd){let r=jalCal(jy);return g2d(jy+621,3,r.march)+(jm<=7?(jm-1)*31:(jm-1)*30+6)+jd-1}
+function d2j(jdn){
+ const [gy,gm,gd]=d2g(jdn);let jy=gy-621,r=jalCal(jy),k=jdn-g2d(gy,3,r.march);
+ if(k>=0){let jm=k<186?1+div(k,31):7+div(k-186,30),jd=1+mod(k,k<186?31:30);return[jy,jm,jd]}
+ jy--;r=jalCal(jy);k=jdn-g2d(gy,3,r.march);let jm=7+div(k-186,30),jd=1+mod(k-186,30);return[jy,jm,jd]
+}
+function jalaliToDate(s){
+ const [jy,jm,jd]=s.replaceAll("-","/").split("/").map(Number);
+ if(!jy||!jm||!jd||jm<1||jm>12||jd<1||jd>31)throw Error("تاریخ را مثل 1405/06/18 وارد کنید.");
+ const [gy,gm,gd]=d2g(j2d(jy,jm,jd));return new Date(gy,gm-1,gd)
+}
+function dateToJalali(d){const [jy,jm,jd]=d2j(g2d(d.getFullYear(),d.getMonth()+1,d.getDate()));return`${jy}/${pad(jm)}/${pad(jd)}`}
+function daysInMonth(y,m){if(m<=6)return 31;if(m<=11)return 30;return jalaliToDate(`${y+1}/01/01`)>jalaliToDate(`${y}/12/01`)?30:29}
+function addMonths(y,m,n){let x=y*12+m-1+n;return[Math.floor(x/12),mod(x,12)+1]}
+function nextDue(item){
+ const [sy,sm]=dateToJalali(jalaliToDate(item.start)).split("/").map(Number),today=new Date(),today0=new Date(today.getFullYear(),today.getMonth(),today.getDate());
+ for(let i=0;i<item.count;i++){const[y,m]=addMonths(sy,sm,i),day=Math.min(item.day,daysInMonth(y,m)),d=jalaliToDate(`${y}/${pad(m)}/${pad(day)}`);if(d>=today0)return{date:d,i}}
+ return null
+}
+function daysUntil(d){return Math.round((d-new Date(new Date().getFullYear(),new Date().getMonth(),new Date().getDate()))/86400000)}
+function render(){
+ const upcoming=data.items.map(x=>({x,d:nextDue(x)})).filter(a=>a.d).sort((a,b)=>a.d.date-b.d.date),n=upcoming[0];
+ $("nextTitle").textContent=n?n.x.name:"هنوز قسطی ثبت نشده";
+ $("nextAmount").textContent=n?money(n.x.amount):"—";
+ $("nextDate").textContent=n?dateToJalali(n.d.date):"—";
+ $("nextDays").textContent=n?(daysUntil(n.d.date)===0?"امروز":daysUntil(n.d.date)===1?"فردا":`${faNum(daysUntil(n.d.date))} روز دیگر`):"—";
+ $("activeCount").textContent=faNum(data.items.length);$("paidCount").textContent=faNum(data.paid.length);
+ $("list").innerHTML=upcoming.map(a=>`<div class="card"><div class="cardMain"><div class="cardName">${escapeHtml(a.x.name)}</div><div class="muted">${dateToJalali(a.d.date)} · قسط ${faNum(a.d.i+1)} از ${faNum(a.x.count)}</div></div><div class="cardSide"><div class="amount">${money(a.x.amount)}</div><button class="payBtn" onclick="pay('${a.x.id}')">پرداخت شد ✓</button></div></div>`).join("")||'<div class="empty">هنوز قسطی ثبت نشده است.</div>';
+ $("paidList").innerHTML=data.paid.slice(-10).reverse().map(p=>`<div class="card"><div class="cardMain"><div class="cardName">${escapeHtml(p.name)}</div><div class="muted">پرداخت در ${p.date}</div></div><div class="cardSide"><div class="amount">${money(p.amount)}</div></div></div>`).join("")||'<div class="empty">هنوز پرداختی ثبت نشده است.</div>'
+}
+function pay(id){const x=data.items.find(a=>a.id===id);if(!x)return;const d=nextDue(x);data.paid.push({name:x.name,amount:x.amount,date:dateToJalali(new Date()),dueDate:dateToJalali(d.date)});x.count--;if(x.count<=0)data.items=data.items.filter(a=>a.id!==id);save()}
+function formatMoneyInput(v){let digits=v.replace(/[^\d]/g,"");return digits?Number(digits).toLocaleString("en-US"):""}
+$("amount").addEventListener("input",e=>{const pos=e.target.selectionStart;e.target.value=formatMoneyInput(e.target.value);e.target.selectionStart=e.target.selectionEnd=e.target.value.length})
+$("addBtn").onclick=()=>$("formDlg").showModal();$("closeDlg").onclick=()=>$("formDlg").close();$("cancelBtn").onclick=()=>$("formDlg").close();
+$("form").onsubmit=e=>{e.preventDefault();try{const start=$("start").value.trim();jalaliToDate(start);const amount=Number($("amount").value.replace(/[^\d]/g,""));const item={id:crypto.randomUUID(),name:$("name").value.trim(),amount,day:Number($("day").value),start,count:Number($("count").value)};if(!item.name||!amount||item.day<1||item.day>31||item.count<1)throw Error("لطفاً همه اطلاعات را کامل وارد کنید.");data.items.push(item);$("form").reset();$("formDlg").close();save()}catch(err){alert(err.message)}};
+$("notifyBtn").onclick=async()=>{if(!("Notification"in window)){alert("این مرورگر اعلان را پشتیبانی نمی‌کند.");return}const p=await Notification.requestPermission();alert(p==="granted"?"اجازه اعلان فعال شد.":"اجازه اعلان داده نشد.")};
+render();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");

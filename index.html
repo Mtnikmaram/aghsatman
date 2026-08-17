@@ -1,27 +1,63 @@
 <!doctype html>
 <html lang="fa" dir="rtl">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<meta name="theme-color" content="#111827"><link rel="manifest" href="manifest.json">
-<title>اقساط من</title><link rel="stylesheet" href="style.css">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0f172a">
+<link rel="manifest" href="manifest.json">
+<title>اقساط من</title>
+<link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div class="app">
-<header><h1>اقساط من</h1><button id="notifyBtn">🔔 اعلان‌ها</button></header>
+<header class="topbar">
+  <div>
+    <div class="eyebrow">مدیریت هوشمند پرداخت‌ها</div>
+    <h1>اقساط من</h1>
+  </div>
+  <button class="iconBtn" id="notifyBtn" title="اعلان‌ها">🔔</button>
+</header>
+
 <main>
-<section class="summary"><div><span>قسط بعدی</span><b id="nextTitle">-</b></div><div><span>مبلغ</span><b id="nextAmount">-</b></div><div><span>سررسید</span><b id="nextDate">-</b></div></section>
-<section><div class="sectionHead"><h2>اقساط پیش‌رو</h2><button id="addBtn">+ افزودن</button></div><div id="list"></div></section>
-<section><div class="sectionHead"><h2>پرداخت‌شده‌ها</h2></div><div id="paidList"></div></section>
+<section class="hero">
+  <div class="heroGlow"></div>
+  <div class="heroLabel">قسط بعدی</div>
+  <div class="heroName" id="nextTitle">هنوز قسطی ثبت نشده</div>
+  <div class="heroAmount" id="nextAmount">—</div>
+  <div class="heroMeta"><span id="nextDate">—</span><span class="dot">•</span><span id="nextDays">—</span></div>
+</section>
+
+<section class="stats">
+  <div class="statCard"><div class="statIcon purple">💳</div><div><span>اقساط فعال</span><b id="activeCount">۰</b></div></div>
+  <div class="statCard"><div class="statIcon green">✓</div><div><span>پرداخت‌شده</span><b id="paidCount">۰</b></div></div>
+</section>
+
+<section>
+  <div class="sectionHead"><div><h2>اقساط پیش‌رو</h2><p>پرداخت‌های بعدی شما</p></div><button class="primaryBtn" id="addBtn">+ افزودن قسط</button></div>
+  <div id="list"></div>
+</section>
+
+<section>
+  <div class="sectionHead"><div><h2>پرداخت‌شده‌ها</h2><p>آخرین پرداخت‌ها</p></div></div>
+  <div id="paidList"></div>
+</section>
 </main>
 </div>
-<dialog id="formDlg"><form method="dialog" id="form">
-<h2>افزودن قسط</h2>
-<label>نام قسط<input id="name" required placeholder="مثلاً شرکت"></label>
-<label>مبلغ (تومان)<input id="amount" required inputmode="numeric" type="number"></label>
-<label>روز پرداخت<input id="day" required min="1" max="31" type="number" value="15"></label>
-<label>تاریخ شروع شمسی<input id="start" required placeholder="1405/06/15"></label>
-<label>تعداد اقساط<input id="count" min="1" type="number" value="12"></label>
-<div class="actions"><button value="cancel">انصراف</button><button id="save" value="default">ذخیره</button></div>
-</form></dialog>
+
+<dialog id="formDlg">
+<form id="form">
+  <div class="modalHead"><div><span class="modalKicker">قسط جدید</span><h2>افزودن قسط</h2></div><button type="button" class="closeBtn" id="closeDlg">×</button></div>
+  <label>نام قسط<input id="name" required placeholder="مثلاً بیمه، شرکت، بانک..."></label>
+  <label>مبلغ
+    <div class="moneyInput"><input id="amount" required inputmode="numeric" autocomplete="off" placeholder="25,000,000"><span>تومان</span></div>
+  </label>
+  <label>روز پرداخت<input id="day" required min="1" max="31" type="number" value="15"></label>
+  <label>تاریخ شروع شمسی<input id="start" required inputmode="numeric" placeholder="1405/06/18"></label>
+  <label>تعداد اقساط<input id="count" min="1" type="number" value="12"></label>
+  <div class="actions"><button type="button" class="secondaryBtn" id="cancelBtn">انصراف</button><button class="primaryBtn" type="submit">ذخیره قسط</button></div>
+</form>
+</dialog>
+
 <script src="app.js"></script>
-</body></html>
+</body>
+</html>
