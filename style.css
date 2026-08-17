@@ -15,7 +15,6 @@ label{display:block;margin:13px 0;font-size:13px;font-weight:800;color:#374151}i
 .datePickerField{width:100%;margin-top:7px;padding:13px 14px;border:1px solid #dce1e9;background:#fafbfc;border-radius:14px;font-size:16px;display:flex;justify-content:space-between;align-items:center;cursor:pointer;color:#374151}
 .datePickerField span:last-child{font-size:18px}
 .datePickerField.placeholder{color:#9aa2b1}
-#calendarDlg{width:min(94vw,420px);padding:0}
 .calendar{padding:20px}
 .calendarHead{display:flex;align-items:center;justify-content:space-between;text-align:center;margin-bottom:18px}
 .calendarHead h3{margin:3px 0 0;font-size:20px}
@@ -28,3 +27,7 @@ label{display:block;margin:13px 0;font-size:13px;font-weight:800;color:#374151}i
 .calendarDays button.selected{background:#111827;color:white;font-weight:900}
 .calendarDays button.empty{visibility:hidden}
 .todayBtn{width:100%;border:0;background:#ede9fe;color:#6d28d9;border-radius:14px;padding:12px;margin-top:15px;font-weight:900}
+
+.calendarOverlay{display:none;position:fixed;inset:0;z-index:9999;background:rgba(15,23,42,.62);backdrop-filter:blur(5px);-webkit-backdrop-filter:blur(5px);align-items:center;justify-content:center;padding:20px}
+.calendarOverlay.open{display:flex}
+.calendar{width:min(94vw,420px);background:#fff;border-radius:26px;padding:20px;box-shadow:0 30px 80px rgba(0,0,0,.35)}

@@ -71,7 +71,8 @@ function openCalendar(){
     calYear=nowJ[0]; calMonth=nowJ[1];
   }
   drawCalendar();
-  $("calendarDlg").showModal();
+  $("calendarOverlay").classList.add("open");
+  $("calendarOverlay").setAttribute("aria-hidden","false");
 }
 function drawCalendar(){
   $("calTitle").textContent=`${months[calMonth-1]} ${faNum(calYear)}`;
@@ -95,9 +96,13 @@ function drawCalendar(){
       $("start").value=btn.dataset.date;
       $("startDisplay").textContent=btn.dataset.date;
       $("startPicker").classList.remove("placeholder");
-      $("calendarDlg").close();
+      closeCalendar();
     };
   });
+}
+function closeCalendar(){
+  $("calendarOverlay").classList.remove("open");
+  $("calendarOverlay").setAttribute("aria-hidden","true");
 }
 function changeMonth(delta){
   calMonth+=delta;
@@ -113,7 +118,9 @@ $("todayBtn").onclick=()=>{
   $("start").value=nowJ;
   $("startDisplay").textContent=nowJ;
   $("startPicker").classList.remove("placeholder");
-  $("calendarDlg").close();
+  closeCalendar();
 };
 
 render();if("serviceWorker"in navigator)navigator.serviceWorker.register("sw.js");
+
+$("calendarOverlay").addEventListener("click",e=>{if(e.target.id==="calendarOverlay")closeCalendar()});
